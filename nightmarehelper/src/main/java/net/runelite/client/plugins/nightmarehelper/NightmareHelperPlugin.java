@@ -27,6 +27,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.PluginManager;
 import org.pf4j.Extension;
 
 @Extension
@@ -101,11 +102,6 @@ public class NightmareHelperPlugin extends Plugin
 	@Subscribe
 	public void onAnimationChanged(AnimationChanged event)
 	{
-		if (!inFight || nm == null)
-		{
-			return;
-		}
-
 		Actor actor = event.getActor();
 		if (!(actor instanceof NPC))
 		{
@@ -113,6 +109,22 @@ public class NightmareHelperPlugin extends Plugin
 		}
 
 		NPC npc = (NPC) actor;
+		int id = npc.getId();
+
+		//this will trigger once when the fight begins
+		if (id == 9432)
+		{
+			//reset everything
+			reset();
+			nm = npc;
+			inFight = true;
+		}
+
+		if (!inFight || nm == null)
+		{
+			return;
+		}
+
 		int animationId = npc.getAnimation();
 
 		switch (animationId)
@@ -170,22 +182,14 @@ public class NightmareHelperPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onNpcDefinitionChanged(NpcChanged event)
+	public void onNpcChanged(NpcChanged event)
 	{
+		//log.info("NpcChanged event triggered." + event.getNpc().getId());
 		final NPC npc = event.getNpc();
 
 		if (npc == null)
 		{
 			return;
-		}
-
-		//this will trigger once when the fight begins
-		if (npc.getId() == NpcID.THE_NIGHTMARE_9432)
-		{
-			//reset everything
-			reset();
-			nm = npc;
-			inFight = true;
 		}
 
 		//if ID changes to 9431 (3rd phase) and is cursed, remove the curse
@@ -221,7 +225,6 @@ public class NightmareHelperPlugin extends Plugin
 		{
 			reset();
 		}
-
 		if (swapMage && timeout == 0)
 		{
 			activatePrayer(Prayer.PROTECT_FROM_MAGIC);
